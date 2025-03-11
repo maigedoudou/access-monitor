@@ -1,32 +1,37 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, Menu
+from tkinter import ttk, scrolledtext, Menu
 import subprocess
-import webbrowser
 import threading
 import os
 import time
+import subprocess
+import platform
 
-# 颜色 & UI 设计
-BG_COLOR = "#1E1E1E"
-TEXT_COLOR = "#D4D4D4"
-BUTTON_COLOR = "#007AFF"  # Mac 风格蓝色
+
+# color & UI 
+BG_COLOR = "#ECF0F1"   
+BUTTON_COLOR = "#34495E"  
+TEXT_COLOR = "#ffffff"  
+STOP_COLOR = "#E74C3C"  
+FETCH_COLOR = "#34495E"  
+CLEAR_COLOR = "#34495E"  
+
 LOG_COLOR = {
     "INFO": "#9CDCFE",
     "WARNING": "#DCDCAA",
     "ERROR": "#F44747",
 }
 STATUS_COLOR = {
-    "Stopped": "gray",
-    "Starting": "yellow",
-    "Running": "green",
+    "Stopped": "white",
+    "Starting": "white",
+    "Running": "white",
     "Error": "red"
 }
 
-# 旋转动画
+# 回転アニメーション
 SPINNER = ["◐", "◓", "◑", "◒"]
 spinner_idx = 0
 
-# 记录出现过的容器
 tracked_containers = {}
 
 context_menu = None
@@ -36,7 +41,7 @@ def update_spinner():
     spinner_idx = (spinner_idx + 1) % len(SPINNER)
     return SPINNER[spinner_idx]
 
-# 检测 Docker 是否运行
+
 def check_docker_status():
     try:
         result = subprocess.run(["docker", "info"], capture_output=True, text=True)
@@ -44,7 +49,6 @@ def check_docker_status():
     except:
         return False
 
-# 启动 Docker Compose
 def start_docker():
     if not check_docker_status():
         log_message("Docker is not running!", "ERROR")
@@ -64,7 +68,6 @@ def run_docker_compose():
         log_message(f"Error: {e}", "ERROR")
         update_docker_status("Error")
 
-# 停止 Docker Compose
 def stop_docker():
     log_message("Stopping Docker Compose...", "WARNING")
     update_docker_status("Stopped")
@@ -86,7 +89,6 @@ def run_docker_down():
         log_message(f"Error: {e}", "ERROR")
         update_docker_status("Error")
 
-# 清除 Docker Cache
 def clear_cache():
     log_message("Clearing Docker Cache...", "WARNING")
     threading.Thread(target=run_clear_cache, daemon=True).start()
@@ -104,18 +106,18 @@ def run_clear_cache():
     except Exception as e:
         log_message(f"Error: {e}", "ERROR")
 
-# 记录日志
 def log_message(message, level="INFO"):
     log_box.insert("end", f"[{update_spinner()} {level}] {message}\n", level)
     log_box.see("end")
 
-# 动态滚动输出
+
+# 動的スクロール出力
 def animate_log_output(process):
     for line in process.stdout:
         log_message(line.strip(), "INFO")
         time.sleep(0.1)
 
-# Docker 容器状态
+# Dockerコンテナのステータス
 def update_container_status(retries=5, delay=1):
     """确保 Docker 容器状态更新，Stop 后仍然显示 Exited X seconds"""
     for _ in range(retries):
@@ -126,11 +128,9 @@ def update_container_status(retries=5, delay=1):
             )
             containers = result.stdout.strip().split("\n")
 
-            # 先清空表格，防止 UI 乱
             for row in container_table.get_children():
                 container_table.delete(row)
 
-            # 重新填充表格
             for container in containers:
                 if container:
                     parts = container.split(maxsplit=1)
@@ -153,13 +153,11 @@ def update_container_status(retries=5, delay=1):
         time.sleep(delay)  # 等待一会儿再尝试
 
 
-
-
-# 显示 Docker 状态
+# Docker のステータスを表示する
 def update_docker_status(status):
     status_label.config(text=f"Docker Status: {status}", fg=STATUS_COLOR.get(status, "gray"))
 
-# 右键菜单 - 操作容器
+# 右クリックメニュー - 操作コンテナ
 def on_right_click(event):
     selected_item = container_table.identify_row(event.y)
     if selected_item and container_table.exists(selected_item):  # 确保 ID 存在
@@ -204,58 +202,104 @@ def run_container_command(container_name, action):
     except Exception as e:
         log_message(f"Error managing container: {e}", "ERROR")
 
-# 打开前端
+
 def fetch_frontend():
     url = "http://localhost:3000"
     try:
-        if os.name == "nt":  # Windows
+        if platform.system() == "Windows":  # Windows
             os.startfile(url)
-        elif "microsoft" in os.uname().release.lower():  # WSL
-            subprocess.run(["explorer.exe", url])
-        else:  # Linux / macOS
-            subprocess.run(["xdg-open", url])
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.Popen(["open", url])
+        elif platform.system() == "Linux":  # Linux
+            subprocess.Popen(["xdg-open", url])
+        elif "microsoft" in platform.version().lower():  # WSL
+            subprocess.Popen(["explorer.exe", url])
+        else:
+            log_message(f"Unsupported OS", "ERROR")
     except Exception as e:
         log_message(f"Cannot open frontend: {e}", "ERROR")
 
-# UI 设计
+
+# UI 
 root = tk.Tk()
 root.title("Docker Launcher")
-root.geometry("1000x650")
+root.geometry("1000x400")
 root.configure(bg=BG_COLOR)
 
-# 日志框
-frame_log = tk.Frame(root, bg=BG_COLOR)
-frame_log.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-log_box = scrolledtext.ScrolledText(frame_log, bg="black", fg=TEXT_COLOR, font=("Consolas", 10), wrap=tk.WORD)
-log_box.pack(fill=tk.BOTH, expand=True)
+# ログ
+frame_log = tk.Frame(root, bg=BG_COLOR)
+frame_log.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)  
+
+
+log_box = scrolledtext.ScrolledText(
+    frame_log, 
+    bg="#2C3E50",  
+    fg="#ECF0F1",  
+    font=("Helvetica", 11),  
+    wrap=tk.WORD,
+    height=8,  
+    padx=10, pady=10,  
+    bd=0,  
+    relief="flat"  
+)
+log_box.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+
+# ログレベルの色を設定する (オプション)
 for level, color in LOG_COLOR.items():
     log_box.tag_configure(level, foreground=color)
 
-# 按钮框架
+
+# ボタンフレーム
 frame_buttons = tk.Frame(root, bg=BG_COLOR)
 frame_buttons.pack(fill=tk.X, padx=5, pady=5)
 
-btn_start = tk.Button(frame_buttons, text="Start", command=start_docker, bg=BUTTON_COLOR, fg="white", font=("Helvetica", 12, "bold"))
-btn_stop = tk.Button(frame_buttons, text="Stop", command=stop_docker, bg="red", fg="white", font=("Helvetica", 12, "bold"))
-btn_fetch = tk.Button(frame_buttons, text="Open Frontend", command=fetch_frontend, bg="blue", fg="white", font=("Helvetica", 12, "bold"))
-btn_clear = tk.Button(frame_buttons, text="Clear Cache", command=clear_cache, bg="gray", fg="white", font=("Helvetica", 12, "bold"))
+btn_start = tk.Button(frame_buttons, text="Start", command=start_docker, bg=BUTTON_COLOR, fg=TEXT_COLOR, font=("Helvetica", 12, "bold"))
+btn_stop = tk.Button(frame_buttons, text="Stop", command=stop_docker, bg=STOP_COLOR, fg=TEXT_COLOR, font=("Helvetica", 12, "bold"))
+btn_fetch = tk.Button(frame_buttons, text="Open Frontend", command=fetch_frontend, bg=FETCH_COLOR, fg=TEXT_COLOR, font=("Helvetica", 12, "bold"))
+btn_clear = tk.Button(frame_buttons, text="Clear Cache", command=clear_cache, bg=CLEAR_COLOR, fg=TEXT_COLOR, font=("Helvetica", 12, "bold"))
 
 btn_start.pack(side=tk.LEFT, padx=10, pady=5, expand=True, fill=tk.X)
 btn_stop.pack(side=tk.LEFT, padx=10, pady=5, expand=True, fill=tk.X)
 btn_fetch.pack(side=tk.LEFT, padx=10, pady=5, expand=True, fill=tk.X)
 btn_clear.pack(side=tk.LEFT, padx=10, pady=5, expand=True, fill=tk.X)
 
-# Docker 状态
-status_label = tk.Label(root, text="Docker Status: Unknown", fg="gray", bg=BG_COLOR, font=("Helvetica", 12, "bold"))
-status_label.pack(pady=10)
 
-# Docker 容器状态
-container_table = ttk.Treeview(root, columns=("Container Name", "Status"), show="headings")
-container_table.heading("Container Name", text="Container Name")
-container_table.heading("Status", text="Status")
-container_table.pack(fill=tk.BOTH, expand=True)
+# Dockerステータス バー
+status_frame = tk.Frame(root, bg=BG_COLOR)
+status_frame.pack(fill=tk.X, padx=5, pady=5)
+
+status_label = tk.Label(status_frame, text="Docker Status: Unknown", fg="white", bg="grey", font=("Helvetica", 12, "bold"), anchor="w", padx=10)
+status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)  
+
+
+# Dockerコンテナステータステーブル
+frame_table = tk.Frame(root, bg=BG_COLOR)
+frame_table.pack(fill=tk.X, padx=5, pady=5)
+
+container_table = ttk.Treeview(frame_table, columns=("Container Name", "Status"), show="headings", height=5) 
+container_table.heading("Container Name", text="Container Name", anchor="w")
+container_table.heading("Status", text="Status", anchor="w")
+
+
+container_table.column("Container Name", width=200, anchor="w")
+container_table.column("Status", width=100, anchor="center")
+
+container_table.pack(fill=tk.X, padx=5, pady=5)
 
 container_table.bind("<Button-3>", on_right_click)
 
+
+
+
 root.mainloop()
+
+
+
+
+
+
+
+
+

@@ -5,8 +5,12 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
+    # volumes:
+    #   - ./frontend/node_modules:/app/node_modules
     volumes:
-      - ./frontend/node_modules:/app/node_modules
+      - ./frontend:/app  # ✅ 只挂载代码
+      - /app/node_modules  # ✅ 让 node_modules 继续使用容器里的
+
     depends_on:
       - backend
 
