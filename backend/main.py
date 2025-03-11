@@ -9,16 +9,16 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # 只允许前端访问
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
-    allow_methods=["*"],  # 允许所有请求方法 (GET, POST, DELETE等)
-    allow_headers=["*"],  # 允许所有请求头
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 logging.basicConfig(level=logging.DEBUG)
 
 db_config = {
-    "host": "db",  # 容器内 MySQL 服务名称
+    "host": "db", 
     "user": "monitor",
     "password": "monitorpassword",
     "database": "access_monitor"
@@ -41,20 +41,19 @@ def fetch_logs():
         response = requests.get(url, timeout=5)
         response.raise_for_status()
         data = response.json()
-        logging.debug(f"✅ API 返回数据: {data}")
+        logging.debug(f"✅ APIからのデータを返す: {data}")
     except requests.exceptions.RequestException as e:
-        logging.error(f"❌ API 请求失败: {e}")
-        raise HTTPException(status_code=500, detail=f"API 请求失败: {e}")
+        logging.error(f"❌ APIリクエストが失敗する: {e}")
+        raise HTTPException(status_code=500, detail=f"APIリクエストが失敗する: {e}")
 
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
 
         for entry in data.get("suspects", []):
-            # 确保 details 是有效的 JSON 对象，而不是字符串
-            details_json = json.dumps(entry, ensure_ascii=False)  # 将 entry 直接转为 JSON 格式
+  
+            details_json = json.dumps(entry, ensure_ascii=False) 
             
-            # 插入数据
             cursor.execute(
                 "INSERT INTO access_logs (log_date, ip_address, details) VALUES (%s, %s, %s)",
                 (data["date"], entry["ip"], details_json)
@@ -63,16 +62,16 @@ def fetch_logs():
         conn.commit()
         cursor.close()
         conn.close()
-        logging.debug("✅ 数据成功插入 MySQL")
+        logging.debug("✅ データがMySQLに正常に挿入されました")
     except mysql.connector.Error as e:
-        logging.error(f"❌ MySQL 插入失败: {e}")
-        raise HTTPException(status_code=500, detail="数据库插入失败")
+        logging.error(f"❌ MySQLへの挿入に失敗しました: {e}")
+        raise HTTPException(status_code=500, detail="データベースへの挿入に失敗しました")
 
     return {"message": "Logs fetched successfully"}
 
 @app.get("/logs")
 def get_logs():
-    """ 查询数据库中的访问日志 """
+    """ データベースのアクセスログを検索する """
     try:
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
@@ -82,8 +81,8 @@ def get_logs():
 
         cursor.close()
         conn.close()
-        logging.debug(f"✅ 获取日志成功，共 {len(logs)} 条记录")
+        logging.debug(f"✅ ログの取得に成功しました，合計で {len(logs)} 件の記録があります")
         return logs
     except mysql.connector.Error as e:
-        logging.error(f"❌ MySQL 查询失败: {e}")
-        raise HTTPException(status_code=500, detail="数据库查询失败")
+        logging.error(f"❌ MySQLの検索が失敗しました: {e}")
+        raise HTTPException(status_code=500, detail="データベースの検索が失敗しました")

@@ -81,9 +81,8 @@ def run_docker_down():
         animate_log_output(process)
         log_message("Docker Compose stopped!", "INFO")
         
-        # 确保 Docker 状态正确更新
         update_docker_status("Stopped")
-        update_container_status(retries=5, delay=1)  # 多次尝试获取最新状态
+        update_container_status(retries=5, delay=1)  
 
     except Exception as e:
         log_message(f"Error: {e}", "ERROR")
@@ -100,8 +99,8 @@ def run_clear_cache():
         log_message("Cache Cleared!", "INFO")
 
         global tracked_containers
-        tracked_containers.clear()  # 清空所有容器记录
-        update_container_status()   # 重新刷新表格，彻底移除停止的容器
+        tracked_containers.clear()  
+        update_container_status()   
 
     except Exception as e:
         log_message(f"Error: {e}", "ERROR")
@@ -119,7 +118,7 @@ def animate_log_output(process):
 
 # Dockerコンテナのステータス
 def update_container_status(retries=5, delay=1):
-    """确保 Docker 容器状态更新，Stop 后仍然显示 Exited X seconds"""
+    
     for _ in range(retries):
         try:
             result = subprocess.run(
@@ -136,21 +135,19 @@ def update_container_status(retries=5, delay=1):
                     parts = container.split(maxsplit=1)
                     if len(parts) == 2:
                         name, status = parts
-                        tracked_containers[name] = status  # 记录容器状态
+                        tracked_containers[name] = status  
 
-            # 重新渲染 UI
             for name, status in tracked_containers.items():
                 status_color = STATUS_COLOR["Running"] if "Up" in status else STATUS_COLOR["Stopped"]
                 container_table.insert("", "end", values=(name, status), tags=(status_color,))
 
-            # 如果所有容器都已退出，就不再重复检查
             if all("Exited" in status or "Created" in status for status in tracked_containers.values()):
                 break
 
         except Exception as e:
             log_message(f"Error fetching containers: {e}", "ERROR")
 
-        time.sleep(delay)  # 等待一会儿再尝试
+        time.sleep(delay)  
 
 
 # Docker のステータスを表示する
@@ -160,13 +157,13 @@ def update_docker_status(status):
 # 右クリックメニュー - 操作コンテナ
 def on_right_click(event):
     selected_item = container_table.identify_row(event.y)
-    if selected_item and container_table.exists(selected_item):  # 确保 ID 存在
+    if selected_item and container_table.exists(selected_item):
         container_table.selection_set(selected_item)
         show_menu(event, selected_item)
 
 def show_menu(event, selected_item):
     global context_menu
-    # 先销毁已有的菜单（防止重复）
+  
     if context_menu:
         context_menu.destroy()
     
@@ -175,7 +172,6 @@ def show_menu(event, selected_item):
     context_menu.add_command(label="Stop", command=lambda: manage_container("stop", selected_item))
     context_menu.add_command(label="Restart", command=lambda: manage_container("restart", selected_item))
     
-    # 在点击其他地方时，销毁菜单
     root.bind("<Button-1>", lambda e: context_menu.destroy())
     
     context_menu.post(event.x_root, event.y_root)

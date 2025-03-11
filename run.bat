@@ -4,7 +4,7 @@ echo ===============================
 echo Starting Project Launcher...
 echo ===============================
 
-:: 运行 Launcher.py
+::  Launcher.pyを実行する
 echo Launching the UI...
 echo ===============================
 echo Launcher has been started!
