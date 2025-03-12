@@ -42,9 +42,11 @@ def fetch_logs():
         response.raise_for_status()
         data = response.json()
         logging.debug(f"✅ APIからのデータを返す: {data}")
+        
     except requests.exceptions.RequestException as e:
         logging.error(f"❌ APIリクエストが失敗する: {e}")
         raise HTTPException(status_code=500, detail=f"APIリクエストが失敗する: {e}")
+
 
     try:
         conn = mysql.connector.connect(**db_config)

@@ -8,7 +8,8 @@ const activeDropdown = ref(null);
 
 const fetchLogs = async () => {
   try {
-    const response = await fetch("http://localhost:8000/logs");
+    // const response = await fetch("http://localhost:8000/logs");
+    const response = await fetch("http://localhost:8000/fetch_logs");
     const data = await response.json();
     logs.value = data;
 
@@ -18,6 +19,7 @@ const fetchLogs = async () => {
     console.error("ログ取得に失敗しました", error);
   }
 };
+
 
 
 const formatJSON = (jsonString) => {

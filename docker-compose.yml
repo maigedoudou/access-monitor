@@ -1,15 +1,56 @@
+# version: '3.8'
+
+# services:
+#   frontend:
+#     build: ./frontend
+#     ports:
+#       - "3000:3000"
+
+#     volumes:
+#       - ./frontend:/app  
+#       - /app/node_modules  # ✅ コンテナ内
+
+#     depends_on:
+#       - backend
+
+#   backend:
+#     build: ./backend
+#     ports:
+#       - "8000:8000"
+#     depends_on:
+#       - db
+
+#   db:
+#     image: mysql:8.0
+#     container_name: access_monitor_db
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: rootpassword
+#       MYSQL_DATABASE: access_monitor
+#       MYSQL_USER: monitor
+#       MYSQL_PASSWORD: monitorpassword
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - db_data:/var/lib/mysql
+
+# volumes:
+#   db_data:
+
+
+
 version: '3.8'
 
 services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
-
+      - "3000:3000"  # 保持 3000 端口，与 Vite 配置一致
     volumes:
-      - ./frontend:/app  
-      - /app/node_modules  # ✅ コンテナ内
-
+      - ./frontend:/app
+      - /app/node_modules  # 确保 node_modules 只存在于容器内
+    environment:
+      - NODE_ENV=development
     depends_on:
       - backend
 
@@ -19,6 +60,12 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=monitor
+      - DB_PASSWORD=monitorpassword
+      - DB_NAME=access_monitor
 
   db:
     image: mysql:8.0
@@ -36,3 +83,8 @@ services:
 
 volumes:
   db_data:
+
+
+
+
+
